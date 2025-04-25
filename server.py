@@ -1,36 +1,54 @@
-from flask import Flask, request, jsonify
-import os
-import datetime
-import json
+# server.py
 
-from astro_chart_generator import generate_chart_text
+from flask import Flask, request, jsonify
+from astro_chart_generator import (
+    validate_date, validate_time, validate_place,
+    generate_chart_json
+)
 
 app = Flask(__name__)
 
-LOG_DIR = "logs"
-LOG_FILE = os.path.join(LOG_DIR, "requests.log")
-os.makedirs(LOG_DIR, exist_ok=True)
+@app.route("/validate/date", methods=["POST"])
+def validate_birth_date():
+    data = request.get_json()
+    birth_date = data.get("birth_date", "")
+    result = validate_date(birth_date)
+    if result is True:
+        return jsonify({"valid": True})
+    return jsonify({"valid": False, "error": result}), 400
 
-def log_request(data):
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(f"\n[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]\n")
-        f.write(json.dumps(data, ensure_ascii=False, indent=2))
-        f.write("\n" + "-"*40 + "\n")
+@app.route("/validate/time", methods=["POST"])
+def validate_birth_time():
+    data = request.get_json()
+    birth_time = data.get("birth_time", "")
+    result = validate_time(birth_time)
+    if result is True:
+        return jsonify({"valid": True})
+    return jsonify({"valid": False, "error": result}), 400
 
-@app.route('/generate', methods=['POST'])
-def generate():
+@app.route("/validate/place", methods=["POST"])
+def validate_birth_place():
+    data = request.get_json()
+    birth_place = data.get("birth_place", "")
+    result = validate_place(birth_place)
+    if result["valid"]:
+        return jsonify({
+            "valid": True,
+            "lat": result["lat"],
+            "lon": result["lon"],
+            "timezone": result["timezone"]
+        })
+    return jsonify({"valid": False, "error": result["error"]}), 400
+
+@app.route("/generate", methods=["POST"])
+def generate_chart():
+    data = request.get_json()
     try:
-        # Чтение и логирование тела запроса
-        data = request.get_json(force=True)
-        log_request(data)
-
-        birth_date = data.get("birth_date")
-        birth_time = data.get("birth_time")
-        birth_place = data.get("birth_place")
-
-        result = generate_chart_text(birth_date, birth_time, birth_place)
-        return jsonify({"result": result, "status": "ok"})
-
+        birth_date = data["birth_date"]
+        birth_time = data["birth_time"]
+        birth_place = data["birth_place"]
+        chart = generate_chart_json(birth_date, birth_time, birth_place)
+        return jsonify(chart)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
