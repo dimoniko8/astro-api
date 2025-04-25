@@ -1,0 +1,2 @@
+127.0.0.1 - - [25/Apr/2025:13:28:34 +0300] "POST /generate HTTP/1.0" 200 1983 "-" "got (https://github.com/sindresorhus/got)"
+127.0.0.1 - - [25/Apr/2025:13:29:44 +0300] "POST /generate HTTP/1.1" 200 2022 "-" "curl/8.5.0"
