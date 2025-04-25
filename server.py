@@ -38,7 +38,7 @@ def validate_birth_place():
             "lon": result["lon"],
             "timezone": result["timezone"]
         })
-    return jsonify({"valid": False, "error": result["error"]}), 400
+    return jsonify({"valid": False, "error": result["error"]}), 400 
 
 @app.route("/generate", methods=["POST"])
 def generate_chart():
@@ -47,6 +47,17 @@ def generate_chart():
         birth_date = data["birth_date"]
         birth_time = data["birth_time"]
         birth_place = data["birth_place"]
+
+        # валидация входных данных
+        if validate_date(birth_date) is not True:
+            return jsonify({"error": "Неверный формат даты"}), 400
+        if validate_time(birth_time) is not True:
+            return jsonify({"error": "Неверный формат времени"}), 400
+        place_check = validate_place(birth_place)
+        if place_check["valid"] is not True:
+            return jsonify({"error": "Неверное место"}), 400
+
+        # генерация натальной карты
         chart = generate_chart_json(birth_date, birth_time, birth_place)
         return jsonify(chart)
     except Exception as e:
